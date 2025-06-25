@@ -1,0 +1,30 @@
+// server/summaryGenerator.ts
+/**
+ * Generates a plain text summary of the book's specifications.
+ * @param payload - The dimension and details payload from the frontend.
+ * @returns A string containing the formatted summary.
+ */
+export function generateSummary(payload) {
+    const { bindingName, pageCount, paperStock, // Added
+    trimWidth, trimHeight, spineWidth, bleed, totalWidth, totalHeight, } = payload;
+    const summaryLines = [
+        `BOOK SPECIFICATION SUMMARY`,
+        `================================`,
+        `Binding Type: ${bindingName}`,
+        `Page Count: ${pageCount}`,
+        `Paper Stock: ${paperStock}`, // Added
+        ``,
+        `--- Cover Dimensions ---`,
+        `Trim Size (Single Page): ${trimWidth.toFixed(3)}" x ${trimHeight.toFixed(3)}"`,
+        `Spine Width: ${spineWidth.toFixed(3)}"`,
+        `Bleed: ${bleed.toFixed(3)}"`,
+        `Total Cover Size (with bleed): ${totalWidth.toFixed(3)}" x ${totalHeight.toFixed(3)}"`,
+        ``,
+        `--- Interior Dimensions ---`,
+        `Page Size: ${trimWidth.toFixed(3)}" x ${trimHeight.toFixed(3)}"`,
+        `Recommended Margins: 0.5" - 0.75"`,
+        ``,
+        `Generated on: ${new Date().toUTCString()}`,
+    ];
+    return summaryLines.join('\n');
+}
