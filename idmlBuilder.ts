@@ -7,13 +7,11 @@ import path from 'path';
 import { TemplatePayload } from './server.js';
 import { fileURLToPath } from 'url';
 
-// --- ROBUST PATHING SETUP ---
+// --- FINAL ROBUST PATHING ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// In dev, __dirname is the project root. In prod, it's the 'dist' folder.
-// Since the build script copies our assets into 'dist', this works for both.
+// After the build step, template.idml will be right next to our running JS file.
 const TEMPLATE_IDML_PATH = path.join(__dirname, 'template.idml');
-
 
 const COLOR_SWATCH_MAP = {
     BLEED: 'Color/BleedColor',

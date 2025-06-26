@@ -1,20 +1,20 @@
 // server/pdfGenerator.ts
-
 import { PDFDocument, PDFPage, rgb, StandardFonts, degrees } from 'pdf-lib';
-import { TemplatePayload, BindingType } from './server.js'; // FIX: Import BindingType from server
+import { TemplatePayload, BindingType } from './server.js';
 import fs from 'fs/promises';
 import path from 'path';
 import * as fontkit from 'fontkit';
 import { fileURLToPath } from 'url';
 
-// --- ROBUST PATHING SETUP ---
+// --- FINAL ROBUST PATHING ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// In dev, __dirname is the project root. In prod, it's the 'dist' folder.
-// Since the build script copies our assets into 'dist', this works for both.
+// After the build step, our assets will be in a folder named 'Assets'
+// right next to our running JS file inside the 'dist' folder.
 const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
 const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
 const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
+
 
 
 const COLORS = {

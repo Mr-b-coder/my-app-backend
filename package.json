@@ -5,10 +5,10 @@
   "type": "module",
   "main": "dist/server.js",
  "scripts": {
-    "build": "tsc && cp -R Assets dist/ && cp template.idml dist/",
-    "start": "node dist/server.js",
-    "dev": "tsx watch server.ts"
-  },
+  "build": "tsc && cp -R Assets dist/ && cp template.idml dist/",
+  "start": "node dist/server.js",
+  "dev": "tsx watch server.ts"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
