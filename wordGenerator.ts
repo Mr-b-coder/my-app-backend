@@ -1,7 +1,40 @@
-// server/docxGenerator.ts  (Note the new filename)
-
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+// server/wordGenerator.ts
+import { Document, Packer, Paragraph, TextRun, IStylesOptions, UnderlineType } from 'docx';
 import { TemplatePayload } from './server.js';
+
+// This is a standard setup for modern docx versions
+const styles: IStylesOptions = {
+    default: {
+        document: {
+            run: {
+                font: "Calibri",
+                size: "22pt", // 11pt
+            },
+        },
+    },
+    characterStyles: [
+        {
+            id: "MyStandardStyle",
+            name: "My Standard Style",
+            run: {
+                font: "Calibri",
+                size: "22pt",
+            },
+        },
+        {
+            id: 'heading1',
+            name: 'Heading 1',
+            basedOn: 'MyStandardStyle',
+            next: 'MyStandardStyle',
+            quickFormat: true,
+            run: {
+                size: '32pt', // 16pt
+                bold: true,
+                color: '000000',
+            },
+        },
+    ],
+};
 
 export async function generateDocx(payload: TemplatePayload): Promise<Buffer> {
   const { trimWidth, trimHeight, bindingName } = payload;
@@ -16,6 +49,7 @@ export async function generateDocx(payload: TemplatePayload): Promise<Buffer> {
   const inchToDXA = (inches: number) => Math.round(inches * 1440);
 
   const doc = new Document({
+    styles: styles,
     sections: [{
       properties: {
         page: {
@@ -33,9 +67,8 @@ export async function generateDocx(payload: TemplatePayload): Promise<Buffer> {
       },
       children: [
         new Paragraph({
-          children: [
-            new TextRun({ text: "Book Interior Template", bold: true, size: 32 }),
-          ],
+          style: 'heading1',
+          text: "Book Interior Template",
         }),
         new Paragraph({
           children: [

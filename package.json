@@ -4,7 +4,7 @@
   "description": "Backend server for the book template generator.",
   "type": "module",
   "main": "dist/server.js",
- "scripts": {
+  "scripts": {
     "build": "tsc && cp -R Assets dist/ && cp template.idml dist/",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts"
@@ -18,7 +18,7 @@
     "ag-psd": "^16.0.0",
     "canvas": "^2.11.2",
     "cors": "^2.8.5",
-    "docx": "^8.5.0",
+    "docx": "^9.5.1",
     "express": "^4.21.2",
     "fontkit": "^2.0.4",
     "jspdf": "^3.0.1",
