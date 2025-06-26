@@ -126,7 +126,7 @@ export async function buildPsd(payload: TemplatePayload): Promise<Buffer> {
         canvas: compositeCanvas
     };
     
-    const buffer = writePsd(psd as agPsd.Psd, { 
+    const buffer = writePsd(psd as unknown as agPsd.Psd, { 
         generateThumbnail: true,
     });
 

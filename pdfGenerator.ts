@@ -4,7 +4,7 @@ import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
 import { TemplatePayload, BindingType } from './server.js';
 import fs from 'fs/promises';
 import path from 'path';
-import * as fontkit from 'fontkit';
+import fontkit from 'fontkit';
 import { fileURLToPath } from 'url';
 
 // --- FINAL ROBUST PATHING ---
@@ -39,7 +39,7 @@ const DPI = 72;
 
 export async function generatePdf(payload: TemplatePayload): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
-    pdfDoc.registerFontkit(fontkit);
+    pdfDoc.registerFontkit(fontkit as any);
     const fontBytes = await fs.readFile(FONT_REGULAR_PATH);
     const boldFontBytes = await fs.readFile(FONT_BOLD_PATH);
     const logoBytes = await fs.readFile(LOGO_PATH);
