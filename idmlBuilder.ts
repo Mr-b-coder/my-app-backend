@@ -7,10 +7,10 @@ import path from 'path';
 import { TemplatePayload } from './server.js';
 import { fileURLToPath } from 'url';
 
-// --- FINAL ROBUST PATHING ---
+// --- FINAL, SIMPLIFIED ROBUST PATHING ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// After the build step, template.idml will be right next to our running JS file.
+// After our build step, template.idml will be right next to this running file.
 const TEMPLATE_IDML_PATH = path.join(__dirname, 'template.idml');
 
 const COLOR_SWATCH_MAP = {

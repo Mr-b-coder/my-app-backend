@@ -1,21 +1,22 @@
 // server/pdfGenerator.ts
-
-import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
+import { PDFDocument, PDFPage, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { TemplatePayload, BindingType } from './server.js';
 import fs from 'fs/promises';
 import path from 'path';
-import fontkit from 'fontkit';
+import * as fontkit from 'fontkit';
 import { fileURLToPath } from 'url';
 
-// --- FINAL ROBUST PATHING ---
+// --- FINAL, SIMPLIFIED ROBUST PATHING ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// After the build step, our assets will be in a folder named 'Assets'
-// right next to our running JS file inside the 'dist' folder.
+// After our build step, the 'Assets' folder will be directly
+// inside the 'dist' folder, right next to this running file.
 const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
 const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
 const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
 
+// ... (the rest of your pdfGenerator.ts file stays exactly the same)
+// --- CONSTANTS ---
 
 const COLORS = {
   background: rgb(0.125, 0.294, 0.498),

@@ -11,13 +11,13 @@ import { TemplatePayload, BindingType } from './server.js'; // Import shared typ
 // FIX: This tells TypeScript to treat the 'node-canvas' Canvas as compatible with what ag-psd expects.
 initializeCanvas(createCanvas as any);
 
-// --- ROBUST PATHING SETUP ---
+// --- FINAL, SIMPLIFIED ROBUST PATHING ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const assetsBasePath = path.join(__dirname, 'Assets'); 
-const LOGO_PATH = path.join(assetsBasePath, 'logo.png');
-const FONT_REGULAR_PATH = path.join(assetsBasePath, 'Poppins-Regular.ttf');
-const FONT_BOLD_PATH = path.join(assetsBasePath, 'Poppins-Bold.ttf');
+// After our build step, the 'Assets' folder will be right next to this running file.
+const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
+const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
+const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
 
 
 // Register fonts for canvas text rendering
