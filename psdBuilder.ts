@@ -5,13 +5,19 @@ const { writePsd, initializeCanvas } = agPsd;
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 initializeCanvas(createCanvas);
 
-const assetsDir = path.join(process.cwd(), 'assets');
-const LOGO_PATH = path.join(assetsDir, 'logo.png');
-const FONT_REGULAR_PATH = path.join(assetsDir, 'Poppins-Regular.ttf');
-const FONT_BOLD_PATH = path.join(assetsDir, 'Poppins-Bold.ttf');
+// --- ROBUST PATHING SETUP ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// In dev, __dirname is the project root. In prod, it's the 'dist' folder.
+// Since the build script copies our assets into 'dist', this works for both.
+const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
+const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
+const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
+
 
 // Register fonts for canvas text rendering
 try {
@@ -313,9 +319,6 @@ function buildCoilWireLayers(p, dpi, assets, isHardcover) {
     const frontLayers = buildCoilWirePage(p, dpi, assets, true, isHardcover, 'FRONT');
     const backLayers = buildCoilWirePage(p, dpi, assets, false, isHardcover, 'BACK');
 
-    // ✨ CHANGE 3: Swapped layer order.
-    // "Front Cover" is now last in the array, so it appears ON TOP in Photoshop
-    // and is drawn last, making it visible in the thumbnail preview.
     return [
         {
             name: 'Back Cover', 
@@ -446,7 +449,7 @@ function drawPerfectBindInfo(ctx, p, dpi, bleedPx, safetyPx, trimWidthPx, trimHe
     
     const spineWidth = (p.spineWidth ?? 0).toFixed(3);
     let spineDescription = `Spine Area for ${p.pageCount || 190} pages using ${p.paperStock || '60# Uncoated'}`;
-    if ((p.spineWidth ?? 0) < 0.125) { spineDescription = `(Do not add text on Spine if it's below 0.125")`; }
+    if ((p.spineWidth ?? 0) < 0.125) { spineDescription = `(Spine text not recommended if it's below 0.125")`; }
     drawInfoLine(ctx, rightColumnX, rightCurrentY, COLORS.indicator.spine, spineWidth, spineDescription, headerSize, descSize);
     
     const barcodeW = inchesToPixels(1.75, dpi); const barcodeH = inchesToPixels(1, dpi);
@@ -551,7 +554,6 @@ function drawCoilWireInfo(ctx, p, dpi, trimAreaOffset, bindingMargin, outsideMar
         const whiteAreaRightEdge = trimAreaOffset + trimAreaWidth - outsideMargin;
         const whiteAreaBottomEdge = trimAreaOffset + trimAreaHeight - topMargin;
         
-        // ✨ CHANGE 1: Moved barcode 10pt to the left on Coil/Wire-O back covers.
         const tenPointsInPixels = inchesToPixels(10 / 72, dpi);
         const barcodeX = whiteAreaRightEdge - barcodeW - inchesToPixels(0.1, dpi) - tenPointsInPixels;
         const barcodeY = whiteAreaBottomEdge - barcodeH - inchesToPixels(0.1, dpi);
@@ -615,19 +617,16 @@ function drawInfoLine(ctx, x, y, color, value, description, headerSize, descSize
     
     const textX = x + inchesToPixels(0.15, 300);
     
-    // ✨ CHANGE 2: Updated text layout to show value on top and description below.
-    
-    // Header text (Value) - Now drawn at the top `y` position
+    // Header text (Value)
     ctx.fillStyle = COLORS.textPrimary;
     ctx.font = `bold ${headerSize}px Poppins-Bold, Arial, sans-serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(value, textX, y);
     
-    // Description text - Now drawn below the header
+    // Description text
     ctx.fillStyle = COLORS.textSecondary;
     ctx.font = `${descSize}px Poppins-Regular, Arial, sans-serif`;
-    // Position description based on the header's font size plus a small gap
     const descriptionY = y + headerSize + inchesToPixels(0.04, 300);
     ctx.fillText(description, textX, descriptionY);
 }

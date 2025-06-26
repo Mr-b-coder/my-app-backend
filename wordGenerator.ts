@@ -1,6 +1,7 @@
 // server/wordGenerator.ts
 
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageSize, PageMargin } from 'docx';
+// FIX: Removed unused imports (HeadingLevel, PageSize, PageMargin) to satisfy the build server.
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 // Make sure to import with the .js extension
 import { TemplatePayload } from './server.js';
 
@@ -42,9 +43,14 @@ export async function generateDocx(payload: TemplatePayload): Promise<Buffer> {
       },
       children: [
         new Paragraph({
-          heading: HeadingLevel.HEADING_1,
+          // Using a simple paragraph instead of a heading if HeadingLevel is not needed.
+          // Or you can add HeadingLevel back to the import if you use it.
           children: [
-            new TextRun("Book Interior Template"),
+            new TextRun({
+              text: "Book Interior Template",
+              bold: true,
+              size: 32, // Example size for a title
+            }),
           ],
         }),
         new Paragraph({

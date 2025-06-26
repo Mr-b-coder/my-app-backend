@@ -1,30 +1,20 @@
 // server/pdfGenerator.ts
 
 import { PDFDocument, PDFPage, rgb, StandardFonts, degrees } from 'pdf-lib';
-// FIX 1: Import the shared BindingType enum instead of redefining it here.
-import { TemplatePayload, BindingType } from './server.js';
+import { TemplatePayload, BindingType } from './server.js'; // FIX: Import BindingType from server
 import fs from 'fs/promises';
 import path from 'path';
 import * as fontkit from 'fontkit';
 import { fileURLToPath } from 'url';
 
 // --- ROBUST PATHING SETUP ---
-// This will work in both local development (running from src) and production (running from dist).
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Check if we are running in the 'dist' folder (production) or 'src' folder (development)
-const isProd = __dirname.includes('dist');
-
-// Define the base path to assets differently based on the environment
-const assetsBasePath = isProd
-  ? path.join(__dirname, 'Assets') // In production, 'Assets' is copied next to our .js files in 'dist'
-  : path.join(__dirname, '..', 'src', 'Assets'); // In development, go up one from 'src' and then into 'src/Assets'
-
-// FIX 2: All asset paths are now built from the robust base path.
-const FONT_REGULAR_PATH = path.join(assetsBasePath, 'Poppins-Regular.ttf');
-const FONT_BOLD_PATH = path.join(assetsBasePath, 'Poppins-Bold.ttf');
-const LOGO_PATH = path.join(assetsBasePath, 'logo.png');
+// In dev, __dirname is the project root. In prod, it's the 'dist' folder.
+// Since the build script copies our assets into 'dist', this works for both.
+const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
+const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
+const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
 
 
 const COLORS = {
@@ -42,7 +32,7 @@ const COLORS = {
       docSize: rgb(0.004, 0.525, 0.522),
       trim: rgb(0.125, 0.294, 0.498),
       spine: rgb(0.925, 0.455, 0.424),
-      punchHole: rgb(0.6, 0.6, 0.6),
+      punchHole: rgb(0.6, 0.6, 0.6), // Added missing color
   }
 };
 const DPI = 72;
@@ -50,8 +40,6 @@ const DPI = 72;
 export async function generatePdf(payload: TemplatePayload): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
-
-    // No changes needed here, as the paths are now correct for the environment.
     const fontBytes = await fs.readFile(FONT_REGULAR_PATH);
     const boldFontBytes = await fs.readFile(FONT_BOLD_PATH);
     const logoBytes = await fs.readFile(LOGO_PATH);
@@ -62,8 +50,7 @@ export async function generatePdf(payload: TemplatePayload): Promise<Buffer> {
 
     switch (payload.bindingName) {
         case BindingType.PERFECT_BIND:
-        // FIX 3: Assuming SADDLE_STITCH is part of your server's BindingType enum. If not, this might need adjustment.
-        // case BindingType.SADDLE_STITCH: 
+        // case BindingType.SADDLE_STITCH: // Assuming this is defined in your server's enum
             await drawPerfectBind(pdfDoc, payload, assets);
             break;
         case BindingType.CASE_BIND:
@@ -83,7 +70,7 @@ export async function generatePdf(payload: TemplatePayload): Promise<Buffer> {
     return Buffer.from(pdfBytes);
 }
 
-// --- DRAWING FUNCTIONS (NO LOGIC CHANGES) ---
+// --- DRAWING FUNCTIONS ---
 
 async function drawPerfectBind(pdfDoc: PDFDocument, p: TemplatePayload, assets: any) {
     const { totalWidth, totalHeight, trimWidth, trimHeight, bleed, spineWidth, safetyMargin, pageCount, paperStock } = p;
@@ -204,14 +191,17 @@ async function drawCoilPage(page: PDFPage, p: TemplatePayload, assets: any, isFr
     const pageW = totalWidth * DPI;
     const pageH = totalHeight * DPI;
     
+    // Define safety margins based on cover type
     let topMargin, bottomMargin, outsideMargin, bindingMargin;
 
     if (isHardcover) {
+        // Use the specific margins for Hardcover Coil/Wire-O
         topMargin = 0.375 * DPI;
         bottomMargin = 0.375 * DPI;
         outsideMargin = 0.375 * DPI;
         bindingMargin = 0.625 * DPI;
     } else {
+        // Use the existing margins for Softcover
         topMargin = (p.safetyMarginTopBottom ?? 0.375) * DPI;
         bottomMargin = (p.safetyMarginTopBottom ?? 0.375) * DPI;
         outsideMargin = (p.safetyMarginOutsideEdge ?? 0.375) * DPI;
@@ -273,7 +263,6 @@ async function drawCoilPage(page: PDFPage, p: TemplatePayload, assets: any, isFr
         const desc = isHardcover ? 'Wrap Area - Extend your color or BG till here' : 'Bleed Area - Extend your color or BG till bleed area';
         drawInfoLine(columnX, currentY, COLORS.indicator.bleed, val, desc);
         currentY -= lineHeight;
-        // Use a general safety margin from payload if available, otherwise default
         const safetyValue = (p.safetyMarginOutsideEdge ?? p.safetyMargin ?? 0.375).toFixed(3);
         drawInfoLine(columnX, currentY, COLORS.indicator.safety, `${safetyValue} in`, 'Safety Margin Keep all your important text inside it');
         currentY -= lineHeight;

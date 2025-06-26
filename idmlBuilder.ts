@@ -5,10 +5,16 @@ import { DOMParser, XMLSerializer } from 'xmldom';
 import fs from 'fs/promises';
 import path from 'path';
 import { TemplatePayload } from './server.js';
+import { fileURLToPath } from 'url';
 
-// ===================================================================================
-//  FINAL, CORRECTED ID MAP - This is confirmed from your files.
-// ===================================================================================
+// --- ROBUST PATHING SETUP ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// In dev, __dirname is the project root. In prod, it's the 'dist' folder.
+// Since the build script copies our assets into 'dist', this works for both.
+const TEMPLATE_IDML_PATH = path.join(__dirname, 'template.idml');
+
+
 const COLOR_SWATCH_MAP = {
     BLEED: 'Color/BleedColor',
     BACKGROUND: 'Color/BackgroundColor',
@@ -124,8 +130,7 @@ const updatePageSetup = (preferencesDoc: Document, spreadDoc: Document, payload:
 
 // --- Main Exported Function ---
 export async function buildIdml(payload: TemplatePayload): Promise<Buffer> {
-    const templatePath = path.join(process.cwd(), 'template.idml');
-    const templateData = await fs.readFile(templatePath);
+    const templateData = await fs.readFile(TEMPLATE_IDML_PATH);
     
     const zip = await JSZip.loadAsync(templateData);
     const parser = new DOMParser();
@@ -163,13 +168,15 @@ export async function buildIdml(payload: TemplatePayload): Promise<Buffer> {
         setTransformAndColor(spreadDoc, IDML_MAP.FRAME_NAME_BARCODE, { x: barcodeX, y: barcodeY, width: barcodeW, height: barcodeH, color: COLOR_SWATCH_MAP.BARCODE });
 
         // Update Text
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SAFETY], IDML_MAP.CONTENT_ID_SAFETY, `${(payload.safetyMargin ?? 0).toFixed(3)} in`);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_TRIM_SIZE], IDML_MAP.CONTENT_ID_TRIM_SIZE, `${payload.trimWidth}x${payload.trimHeight} in`);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SPINE], IDML_MAP.CONTENT_ID_SPINE, `${(payload.spineWidth ?? 0).toFixed(3)} in`);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SPINE], IDML_MAP.CONTENT_ID_SPINE, `Spine Text Area for ${payload.pageCount} pages using ${payload.paperStock}`, 1);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_BLEED], IDML_MAP.CONTENT_ID_BLEED, `${(payload.bleed ?? 0).toFixed(3)} in`);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_TOTAL_SIZE], IDML_MAP.CONTENT_ID_TOTAL_SIZE, `${payload.totalWidth.toFixed(3)} x ${payload.totalHeight.toFixed(3)} in`);
-        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_BARCODE], IDML_MAP.CONTENT_ID_BARCODE, "1.75 x 1 in");
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_LHS_LOGO_TEXT], IDML_MAP.CONTENT_ID_LHS_LOGO_TEXT, `BACK COVER`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_RHS_LOGO_TEXT], IDML_MAP.CONTENT_ID_RHS_LOGO_TEXT, `FRONT COVER`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SAFETY_VAL], IDML_MAP.CONTENT_ID_SAFETY_VAL, `${(payload.safetyMargin ?? 0).toFixed(3)} in`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_TRIM_SIZE_VAL], IDML_MAP.CONTENT_ID_TRIM_SIZE_VAL, `${payload.trimWidth}x${payload.trimHeight} in`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SPINE_VAL], IDML_MAP.CONTENT_ID_SPINE_VAL, `${(payload.spineWidth ?? 0).toFixed(3)} in`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_SPINE_DESC], IDML_MAP.CONTENT_ID_SPINE_DESC, `Spine Text Area for ${payload.pageCount} pages using ${payload.paperStock}`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_BLEED_VAL], IDML_MAP.CONTENT_ID_BLEED_VAL, `${(payload.bleed ?? 0).toFixed(3)} in`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_TOTAL_SIZE_VAL], IDML_MAP.CONTENT_ID_TOTAL_SIZE_VAL, `${payload.totalWidth.toFixed(3)} x ${payload.totalHeight.toFixed(3)} in`);
+        updateStoryContent(storyDocs[IDML_MAP.STORY_FILE_BARCODE_VAL], IDML_MAP.CONTENT_ID_BARCODE_VAL, "1.75 x 1 in");
     }
 
     const serializer = new XMLSerializer();

@@ -4,11 +4,11 @@
   "description": "Backend server for the book template generator.",
   "type": "module",
   "main": "dist/server.js",
-  "scripts": {
-  "build": "tsc && cp -R src/Assets dist/Assets",
-  "start": "node dist/server.js",
-  "dev": "tsx watch server.ts"
-},
+ "scripts": {
+    "build": "tsc && cp -R Assets dist/ && cp template.idml dist/",
+    "start": "node dist/server.js",
+    "dev": "tsx watch server.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
