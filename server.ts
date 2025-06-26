@@ -12,6 +12,15 @@ import { generateSummary } from './summaryGenerator.js';
 
 const app = express();
 
+// ✅ This is now the single source of truth for BindingType
+export enum BindingType {
+  PERFECT_BIND = "Perfect Bind / Softcover",
+  CASE_BIND = "Case Bind / Hardcover", 
+  SADDLE_STITCH = "Saddle Stitch",
+  COIL_WIRE_O_SOFTCOVER = "Coil / Wire-O - Softcover",
+  COIL_WIRE_O_HARDCOVER = "Coil / Wire-O - Hardcover",
+}
+
 // This interface defines the data structure we expect from the frontend
 export interface TemplatePayload {
   packageType: 'all' | 'cover' | 'interior';
@@ -39,12 +48,9 @@ export interface TemplatePayload {
   isHardcoverCoilWire?: boolean;
 }
 
-// ✅✅✅ --- THE FINAL FIX IS HERE --- ✅✅✅
-// We are adding the 'origin' property to your cors configuration.
-// This tells the browser that requests from your Netlify site are allowed.
 const corsOptions = {
   origin: 'https://acutemplate.netlify.app',
-  exposedHeaders: ['Content-Disposition'], // Keep this so the filename can be read
+  exposedHeaders: ['Content-Disposition'],
 };
 app.use(cors(corsOptions));
 
@@ -63,7 +69,6 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
     const filesToGenerate: { name: string; generator: Promise<Buffer> }[] = [];
     const { packageType } = payload;
     
-    // 1. Prepare list of files to generate based on packageType
     filesToGenerate.push({ name: 'summary.txt', generator: Promise.resolve(Buffer.from(generateSummary(payload))) });
 
     if (packageType === 'all' || packageType === 'cover') {
@@ -80,12 +85,10 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
       filesToGenerate.push({ name: 'Interior/interior.pdf', generator: Promise.resolve(Buffer.from('Placeholder for Interior PDF')) });
     }
 
-    // 2. Generate all files in parallel
     const generatedFiles = await Promise.all(
       filesToGenerate.map(file => file.generator.then(content => ({ name: file.name, content })))
     );
 
-    // 3. Create and send the ZIP file using JSZip
     console.log('Zipping all files...');
     const zip = new JSZip();
     for (const file of generatedFiles) {

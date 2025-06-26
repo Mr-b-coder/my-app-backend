@@ -1,21 +1,23 @@
-// server/psdBuilder.js
+// server/psdBuilder.ts
 
 import * as agPsd from 'ag-psd';
 const { writePsd, initializeCanvas } = agPsd;
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { Canvas, createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { TemplatePayload, BindingType } from './server.js'; // Import shared types
 
-initializeCanvas(createCanvas);
+// FIX: This tells TypeScript to treat the 'node-canvas' Canvas as compatible with what ag-psd expects.
+initializeCanvas(createCanvas as any);
 
-// --- FINAL ROBUST PATHING ---
+// --- ROBUST PATHING SETUP ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// After the build step, our assets will be in a folder named 'Assets'.
-const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
-const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
-const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
+const assetsBasePath = path.join(__dirname, 'Assets'); 
+const LOGO_PATH = path.join(assetsBasePath, 'logo.png');
+const FONT_REGULAR_PATH = path.join(assetsBasePath, 'Poppins-Regular.ttf');
+const FONT_BOLD_PATH = path.join(assetsBasePath, 'Poppins-Bold.ttf');
 
 
 // Register fonts for canvas text rendering
@@ -26,20 +28,12 @@ try {
     console.warn('Could not load custom fonts, falling back to system fonts');
 }
 
-const BindingType = {
-  PERFECT_BIND: "Perfect Bind / Softcover",
-  CASE_BIND: "Case Bind / Hardcover", 
-  SADDLE_STITCH: "Saddle Stitch",
-  COIL_WIRE_O_SOFTCOVER: "Coil / Wire-O - Softcover",
-  COIL_WIRE_O_HARDCOVER: "Coil / Wire-O - Hardcover",
-};
-
 const COLORS = {
-  background: '#204B7F', // Dark Blue
-  bleedArea: '#018685',  // Teal
-  spine: '#EB746C',       // Salmon/Coral
-  page: '#FFFFFF',         // White
-  safety: 'rgba(0, 255, 0, 0.7)', // Green for guides
+  background: '#204B7F', 
+  bleedArea: '#018685',
+  spine: '#EB746C',
+  page: '#FFFFFF',
+  safety: 'rgba(0, 255, 0, 0.7)',
   textPrimary: '#1A1A1A',
   textSecondary: '#666666',
   white: '#FFFFFF',
@@ -54,14 +48,14 @@ const COLORS = {
   }
 };
 
-const inchesToPixels = (inches, dpi = 300) => Math.round(inches * dpi);
+const inchesToPixels = (inches: number, dpi: number = 300): number => Math.round(inches * dpi);
 
-export async function buildPsd(payload) {
+export async function buildPsd(payload: TemplatePayload): Promise<Buffer> {
     const dpi = 300;
     const canvasWidth = inchesToPixels(payload.totalWidth, dpi);
     const canvasHeight = inchesToPixels(payload.totalHeight, dpi);
-    let layers = [];
-    let guides = [];
+    let layers: any[] = [];
+    let guides: any[] = [];
 
     // Load assets
     const logoBuffer = await fs.readFile(LOGO_PATH).catch(() => null);
@@ -101,7 +95,7 @@ export async function buildPsd(payload) {
     const compositeCanvas = createCanvas(canvasWidth, canvasHeight);
     const compositeCtx = compositeCanvas.getContext('2d');
     
-    function flattenAndDrawLayers(layersArray, context) {
+    function flattenAndDrawLayers(layersArray: any[], context: CanvasRenderingContext2D) {
         for (const layer of layersArray) {
             if (layer.canvas) {
                 context.drawImage(layer.canvas, 0, 0);
@@ -126,15 +120,13 @@ export async function buildPsd(payload) {
                 verticalResolutionUnit: 'ppi',
                 heightUnit: 'in',
             },
-            gridAndGuidesInformation: guides.length > 0 ? {
-                guides: guides
-            } : undefined,
+            gridAndGuidesInformation: guides.length > 0 ? { guides } : undefined,
         },
         children: layers,
         canvas: compositeCanvas
     };
     
-    const buffer = writePsd(psd, { 
+    const buffer = writePsd(psd as agPsd.Psd, { 
         generateThumbnail: true,
     });
 
@@ -143,7 +135,7 @@ export async function buildPsd(payload) {
 
 // --- GUIDE CREATION FUNCTIONS ---
 
-function createPerfectBindGuides(p, dpi) {
+function createPerfectBindGuides(p: TemplatePayload, dpi: number) {
     const { totalWidth, totalHeight, trimWidth, trimHeight, bleed, spineWidth, safetyMargin } = p;
     const bleedPx = inchesToPixels(bleed ?? 0, dpi);
     const spinePx = inchesToPixels(spineWidth ?? 0, dpi);
@@ -165,7 +157,7 @@ function createPerfectBindGuides(p, dpi) {
     ];
 }
 
-function createCaseBindGuides(p, dpi) {
+function createCaseBindGuides(p: TemplatePayload, dpi: number) {
     const { totalWidth, totalHeight, wrapAmount, spineWidth, safetyMargin } = p;
     const wrapPx = inchesToPixels(wrapAmount ?? 0.75, dpi);
     const spinePx = inchesToPixels(spineWidth ?? 0, dpi);
@@ -186,7 +178,7 @@ function createCaseBindGuides(p, dpi) {
     ];
 }
 
-function createCoilWireGuides(p, dpi, isHardcover) {
+function createCoilWireGuides(p: TemplatePayload, dpi: number, isHardcover: boolean) {
     const { totalWidth, totalHeight } = p;
     const totalWidthPx = inchesToPixels(totalWidth, dpi);
     const totalHeightPx = inchesToPixels(totalHeight, dpi);
@@ -216,7 +208,7 @@ function createCoilWireGuides(p, dpi, isHardcover) {
 
 // --- LAYER BUILDER FUNCTIONS ---
 
-function buildPerfectBindLayers(p, dpi, assets) {
+function buildPerfectBindLayers(p: TemplatePayload, dpi: number, assets: any) {
     const { totalWidth, totalHeight, trimWidth, trimHeight, bleed, spineWidth, safetyMargin } = p;
     const canvasWidth = inchesToPixels(totalWidth, dpi); const canvasHeight = inchesToPixels(totalHeight, dpi);
     const bleedPx = inchesToPixels(bleed ?? 0, dpi); const spinePx = inchesToPixels(spineWidth ?? 0, dpi);
@@ -265,7 +257,7 @@ function buildPerfectBindLayers(p, dpi, assets) {
     ];
 }
 
-function buildCaseBindLayers(p, dpi, assets) {
+function buildCaseBindLayers(p: TemplatePayload, dpi: number, assets: any) {
     const { totalWidth, totalHeight, wrapAmount, spineWidth, safetyMargin } = p;
     const canvasWidth = inchesToPixels(totalWidth, dpi); const canvasHeight = inchesToPixels(totalHeight, dpi);
     const wrapPx = inchesToPixels(wrapAmount ?? 0.75, dpi); const spinePx = inchesToPixels(spineWidth ?? 0, dpi);
@@ -314,7 +306,7 @@ function buildCaseBindLayers(p, dpi, assets) {
     ];
 }
 
-function buildCoilWireLayers(p, dpi, assets, isHardcover) {
+function buildCoilWireLayers(p: TemplatePayload, dpi: number, assets: any, isHardcover: boolean) {
     const frontLayers = buildCoilWirePage(p, dpi, assets, true, isHardcover, 'FRONT');
     const backLayers = buildCoilWirePage(p, dpi, assets, false, isHardcover, 'BACK');
 
@@ -330,7 +322,7 @@ function buildCoilWireLayers(p, dpi, assets, isHardcover) {
     ];
 }
 
-function buildCoilWirePage(p, dpi, assets, isFrontCover, isHardcover, pageType) {
+function buildCoilWirePage(p: TemplatePayload, dpi: number, assets: any, isFrontCover: boolean, isHardcover: boolean, pageType: string) {
     const { totalWidth, totalHeight } = p;
     const canvasWidth = inchesToPixels(totalWidth, dpi);
     const canvasHeight = inchesToPixels(totalHeight, dpi);
@@ -397,7 +389,7 @@ function buildCoilWirePage(p, dpi, assets, isFrontCover, isHardcover, pageType) 
 
 // --- DRAWING HELPER FUNCTIONS ---
 
-function drawLogosAndLabels(ctx, assets, dpi, bleedPx, safetyPx, trimWidthPx, trimHeightPx, leftSpineFoldX, rightSpineFoldX) {
+function drawLogosAndLabels(ctx: CanvasRenderingContext2D, assets: any, dpi: number, bleedPx: number, safetyPx: number, trimWidthPx: number, trimHeightPx: number, leftSpineFoldX: number, rightSpineFoldX: number) {
     if (assets.logoImage) {
         const logoScale = 1.2;
         const logoY = bleedPx + safetyPx + inchesToPixels(0.5, dpi);
@@ -426,7 +418,7 @@ function drawLogosAndLabels(ctx, assets, dpi, bleedPx, safetyPx, trimWidthPx, tr
     }
 }
 
-function drawPerfectBindInfo(ctx, p, dpi, bleedPx, safetyPx, trimWidthPx, trimHeightPx, leftSpineFoldX, rightSpineFoldX, canvasHeight) {
+function drawPerfectBindInfo(ctx: CanvasRenderingContext2D, p: TemplatePayload, dpi: number, bleedPx: number, safetyPx: number, trimWidthPx: number, trimHeightPx: number, leftSpineFoldX: number, rightSpineFoldX: number, canvasHeight: number) {
     const leftColumnX = bleedPx + safetyPx + inchesToPixels(0.3, dpi);
     const rightColumnX = rightSpineFoldX + safetyPx + inchesToPixels(0.3, dpi);
     let leftCurrentY = bleedPx + inchesToPixels(3.0, dpi);
@@ -448,7 +440,7 @@ function drawPerfectBindInfo(ctx, p, dpi, bleedPx, safetyPx, trimWidthPx, trimHe
     
     const spineWidth = (p.spineWidth ?? 0).toFixed(3);
     let spineDescription = `Spine Area for ${p.pageCount || 190} pages using ${p.paperStock || '60# Uncoated'}`;
-    if ((p.spineWidth ?? 0) < 0.125) { spineDescription = `(Spine text not recommended if it's below 0.125")`; }
+    if ((p.spineWidth ?? 0) < 0.125) { spineDescription = `(Do not add text on Spine if it's below 0.125")`; }
     drawInfoLine(ctx, rightColumnX, rightCurrentY, COLORS.indicator.spine, spineWidth, spineDescription, headerSize, descSize);
     
     const barcodeW = inchesToPixels(1.75, dpi); const barcodeH = inchesToPixels(1, dpi);
@@ -458,7 +450,7 @@ function drawPerfectBindInfo(ctx, p, dpi, bleedPx, safetyPx, trimWidthPx, trimHe
     ctx.fillRect(barcodeX, barcodeY, barcodeW, barcodeH); ctx.globalAlpha = 1.0;
 }
 
-function drawCaseBindInfo(ctx, p, dpi, wrapPx, safetyPx, leftCoverWidth, backgroundHeight, spineStartX, spinePx, canvasHeight) {
+function drawCaseBindInfo(ctx: CanvasRenderingContext2D, p: TemplatePayload, dpi: number, wrapPx: number, safetyPx: number, leftCoverWidth: number, backgroundHeight: number, spineStartX: number, spinePx: number, canvasHeight: number) {
     const leftColumnX = wrapPx + safetyPx + inchesToPixels(0.3, dpi);
     const rightColumnX = spineStartX + spinePx + safetyPx + inchesToPixels(0.3, dpi);
     let leftCurrentY = wrapPx + inchesToPixels(3.0, dpi);
@@ -490,7 +482,7 @@ function drawCaseBindInfo(ctx, p, dpi, wrapPx, safetyPx, leftCoverWidth, backgro
     ctx.fillRect(barcodeX, barcodeY, barcodeW, barcodeH); ctx.globalAlpha = 1.0;
 }
 
-function drawCaseBindLogosAndLabels(ctx, assets, dpi, wrapPx, safetyPx, leftCoverWidth, backgroundHeight, spineStartX, spinePx) {
+function drawCaseBindLogosAndLabels(ctx: CanvasRenderingContext2D, assets: any, dpi: number, wrapPx: number, safetyPx: number, leftCoverWidth: number, backgroundHeight: number, spineStartX: number, spinePx: number) {
     if (assets.logoImage) {
         const logoScale = 1.2;
         const logoY = wrapPx + safetyPx + inchesToPixels(0.5, dpi);
@@ -519,7 +511,7 @@ function drawCaseBindLogosAndLabels(ctx, assets, dpi, wrapPx, safetyPx, leftCove
     }
 }
 
-function drawCoilWireInfo(ctx, p, dpi, trimAreaOffset, bindingMargin, outsideMargin, topMargin, bottomMargin, canvasWidth, canvasHeight, isHardcover, isFrontCover) {
+function drawCoilWireInfo(ctx: CanvasRenderingContext2D, p: TemplatePayload, dpi: number, trimAreaOffset: number, bindingMargin: number, outsideMargin: number, topMargin: number, bottomMargin: number, canvasWidth: number, canvasHeight: number, isHardcover: boolean, isFrontCover: boolean) {
     const leftMargin = isFrontCover ? bindingMargin : outsideMargin;
     const columnX = trimAreaOffset + leftMargin + inchesToPixels(0.3, dpi);
     let currentY = trimAreaOffset + inchesToPixels(3.0, dpi);
@@ -564,7 +556,7 @@ function drawCoilWireInfo(ctx, p, dpi, trimAreaOffset, bindingMargin, outsideMar
     }
 }
 
-function drawCoilWireLogosAndLabels(ctx, assets, dpi, trimAreaOffset, bindingMargin, outsideMargin, topMargin, bottomMargin, canvasWidth, canvasHeight, isFrontCover, pageType) {
+function drawCoilWireLogosAndLabels(ctx: CanvasRenderingContext2D, assets: any, dpi: number, trimAreaOffset: number, bindingMargin: number, outsideMargin: number, topMargin: number, bottomMargin: number, canvasWidth: number, canvasHeight: number, isFrontCover: boolean, pageType: string) {
     if (assets.logoImage) {
         const leftMargin = isFrontCover ? bindingMargin : outsideMargin;
         const rightMargin = isFrontCover ? outsideMargin : bindingMargin;
@@ -589,7 +581,7 @@ function drawCoilWireLogosAndLabels(ctx, assets, dpi, trimAreaOffset, bindingMar
     }
 }
 
-function drawPunchHoles(ctx, dpi, isFrontCover, trimAreaOffset, trimAreaWidth, trimAreaHeight, canvasHeight) {
+function drawPunchHoles(ctx: CanvasRenderingContext2D, dpi: number, isFrontCover: boolean, trimAreaOffset: number, trimAreaWidth: number, trimAreaHeight: number, canvasHeight: number) {
     const punchHoleRadius = inchesToPixels(0.075, dpi);
     const punchHoleSpacing = inchesToPixels(0.375, dpi);
     const punchHoleCenterOffset = inchesToPixels(0.375, dpi);
@@ -609,7 +601,7 @@ function drawPunchHoles(ctx, dpi, isFrontCover, trimAreaOffset, trimAreaWidth, t
     ctx.globalAlpha = 1.0;
 }
 
-function drawInfoLine(ctx, x, y, color, value, description, headerSize, descSize) {
+function drawInfoLine(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, value: string, description: string, headerSize: number, descSize: number) {
     // Color indicator
     ctx.fillStyle = color;
     ctx.fillRect(x, y, inchesToPixels(0.05, 300), inchesToPixels(0.35, 300));

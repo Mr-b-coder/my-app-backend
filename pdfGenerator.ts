@@ -1,5 +1,6 @@
 // server/pdfGenerator.ts
-import { PDFDocument, PDFPage, rgb, StandardFonts, degrees } from 'pdf-lib';
+
+import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
 import { TemplatePayload, BindingType } from './server.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -14,7 +15,6 @@ const __dirname = path.dirname(__filename);
 const FONT_REGULAR_PATH = path.join(__dirname, 'Assets', 'Poppins-Regular.ttf');
 const FONT_BOLD_PATH = path.join(__dirname, 'Assets', 'Poppins-Bold.ttf');
 const LOGO_PATH = path.join(__dirname, 'Assets', 'logo.png');
-
 
 
 const COLORS = {
@@ -32,7 +32,7 @@ const COLORS = {
       docSize: rgb(0.004, 0.525, 0.522),
       trim: rgb(0.125, 0.294, 0.498),
       spine: rgb(0.925, 0.455, 0.424),
-      punchHole: rgb(0.6, 0.6, 0.6), // Added missing color
+      punchHole: rgb(0.6, 0.6, 0.6),
   }
 };
 const DPI = 72;
@@ -50,7 +50,7 @@ export async function generatePdf(payload: TemplatePayload): Promise<Buffer> {
 
     switch (payload.bindingName) {
         case BindingType.PERFECT_BIND:
-        // case BindingType.SADDLE_STITCH: // Assuming this is defined in your server's enum
+        case BindingType.SADDLE_STITCH:
             await drawPerfectBind(pdfDoc, payload, assets);
             break;
         case BindingType.CASE_BIND:
