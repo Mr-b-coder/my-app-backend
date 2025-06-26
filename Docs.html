@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acutrack Template Generator - Full Developer Documentation</title>
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333333;
+      --heading-color: #1a1a1a;
+      --border-color: #dee2e6;
+      --pre-bg-color: #f1f3f5;
+      --pre-border-color: #ced4da;
+      --link-color: #007bff;
+      --link-hover-color: #0056b3;
+      --table-header-bg: #f8f9fa;
+      --shadow-color: rgba(0,0,0,0.05);
+      --note-bg: #fff3cd;
+      --note-border: #ffeeba;
+      --note-text: #856404;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.7;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h1, h2, h3 {
+      margin-top: 2em;
+      margin-bottom: 0.8em;
+      color: var(--heading-color);
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.8em;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.4em;
+      text-align: center;
+    }
+    h2 {
+      font-size: 2.1em;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.3em;
+    }
+    h3 {
+      font-size: 1.6em;
+      font-weight: 500;
+    }
+    p, ul, ol {
+      margin-bottom: 1.2em;
+    }
+    ul, ol {
+      padding-left: 25px;
+    }
+    li {
+      margin-bottom: 0.5em;
+    }
+    pre {
+      background-color: var(--pre-bg-color);
+      border: 1px solid var(--pre-border-color);
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 0.9em;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    }
+    p code, li code {
+      background-color: var(--pre-bg-color);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 88%;
+    }
+    a {
+      color: var(--link-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    a:hover {
+      text-decoration: underline;
+      color: var(--link-hover-color);
+    }
+    .switcher {
+      text-align: center;
+      margin-bottom: 2.5em;
+      padding: 10px;
+      background-color: var(--pre-bg-color);
+      border-radius: 8px;
+    }
+    .switcher a {
+      font-size: 1.2em;
+      margin: 0 20px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+    }
+    .switcher a.active {
+      background-color: var(--link-color);
+      color: white;
+      font-weight: bold;
+    }
+    .switcher a.active:hover {
+      text-decoration: none;
+      background-color: var(--link-hover-color);
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    .note {
+        background-color: var(--note-bg);
+        border-left: 5px solid var(--note-border);
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        color: var(--note-text);
+    }
+    .note strong {
+        color: var(--heading-color);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Acutrack Template Generator</h1>
+  <p style="text-align: center; font-size: 1.1em; color: #6c757d;">Complete Developer Documentation</p>
+
+  <nav class="switcher" id="section-switcher">
+    <a href="#frontend" class="active" data-section="frontend">Frontend Docs</a>
+    <a href="#backend" data-section="backend">Backend Docs</a>
+  </nav>
+
+  <!-- ====================================================================== -->
+  <!-- ========================== FRONTEND SECTION ========================== -->
+  <!-- ====================================================================== -->
+  <div id="frontend" class="section active">
+    <h2>Frontend Documentation</h2>
+    <p>This is the frontend user interface for the Acutrack Template Generator. It's a React application built with Vite and styled with Tailwind CSS.</p>
+    <p>
+        <strong>GitHub Repository:</strong> <a href="https://github.com/Mr-b-coder/my-app-frontend" target="_blank">Mr-b-coder/my-app-frontend</a><br>
+        <strong>Live URL:</strong> <a href="https://acutemplate.netlify.app" target="_blank">https://acutemplate.netlify.app</a><br>
+        <strong>Hosted On:</strong> Netlify
+    </p>
+
+    <h3 id="fe-setup">How to Run Locally</h3>
+    <ol>
+      <li>Navigate into the frontend folder: <pre><code>cd my-app-frontend</code></pre></li>
+      <li>Install all required packages: <pre><code>npm install</code></pre></li>
+      <li>Start the development server: <pre><code>npm run dev</code></pre></li>
+    </ol>
+    <p>The app will open in your browser, usually at <code>http://localhost:5173</code>. <br><strong>Note:</strong> For file generation to work, the backend server must also be running.</p>
+
+    <h3 id="fe-customize">Detailed Customization Guide</h3>
+    
+    <h4>🎨 1. How to Edit Theme Colors</h4>
+    <p>Your application uses <strong>Tailwind CSS</strong> for styling. The central place for all color definitions is the Tailwind configuration file.</p>
+    <ol>
+      <li><strong>Find the file:</strong> Open <code>my-app-frontend/tailwind.config.js</code>.</li>
+      <li>
+        <strong>Locate the <code>colors</code> object:</strong> Inside the file, look for <code>theme.extend.colors</code>. This is where your app's main color palette is defined.
+        <pre><code>// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        // --- PRIMARY BRAND COLORS ---
+        primary: '#0A2F5C',      // Dark Blue (for buttons, headers)
+        accent: '#13B5CF',       // Cyan (for highlights, rings)
+        // ... other colors
+      },
+    },
+  },
+};</code></pre>
+      </li>
+      <li><strong>Change the Hex Codes:</strong> To change a color across the entire application, simply replace its hex code value (e.g., change <code>'#0A2F5C'</code> to a new color).</li>
+    </ol>
+    <div class="note">
+        <strong>⚠️ Important:</strong> After saving changes to <code>tailwind.config.js</code>, you may need to <strong>restart your local development server</strong> (`npm run dev`) for the new styles to be applied.
+    </div>
+
+    <h4>💅 2. How to Edit Button Styles</h4>
+    <p>The buttons in your app are a reusable component. Their styling is controlled by a combination of the component file and Tailwind CSS classes.</p>
+    <ol>
+        <li><strong>Find the component file:</strong> Open <code>my-app-frontend/src/components/Button.tsx</code>.</li>
+        <li>
+            <strong>Understand "Variants":</strong> The button has different styles called "variants" (e.g., `primary`, `secondary`, `outline`). The code uses a <code>switch</code> statement to apply different CSS classes for each variant.
+            <pre><code>// Inside Button.tsx
+// ...
+switch (variant) {
+  case 'secondary':
+    baseClasses += ' bg-slate-200 text-slate-700 hover:bg-slate-300';
+    break;
+  case 'primary':
+  default:
+    baseClasses += ' bg-primary text-white hover:bg-opacity-90'; // <-- Edit these classes
+    break;
+}</code></pre>
+        </li>
+        <li><strong>How to Change a Style:</strong> You can change these classes to any valid Tailwind CSS class. For example, to make the primary button red, you could change <code>bg-primary</code> to <code>bg-red-600</code> and <code>hover:bg-opacity-90</code> to <code>hover:bg-red-700</code>.</li>
+    </ol>
+
+    <h4>📚 3. How to Add or Edit Binding Types</h4>
+    <p>Adding a new binding type requires changes in both the frontend and the backend.</p>
+    <ol>
+        <li><strong>Find the main app file:</strong> Open <code>my-app-frontend/src/App.tsx</code>.</li>
+        <li>
+            <strong>Add the calculation logic:</strong> Find the function named <code>calculateCoverDimensions</code>. Inside this function, there is a large <code>if / else if</code> block. You must add a new <code>else if</code> block for your new binding type and provide the formulas to calculate its dimensions.
+            <pre><code>// Inside calculateCoverDimensions() in App.tsx
+// ...
+} else if (formData.bindingType === "Your New Binding Type") { // <-- ADD YOUR NEW BLOCK HERE
+    // calculations.spineWidth = ...
+    // calculations.totalCoverWidth = ...
+    // ... your new formulas here
+}</code></pre>
+        </li>
+        <li><strong>Inform the Backend:</strong> The backend also needs to be updated. See the Backend Documentation for instructions on adding the new binding type there.</li>
+    </ol>
+
+    <h3 id="fe-deploy">Deployment</h3>
+    <p>This frontend is continuously deployed to <strong>Netlify</strong> from the `main` branch of its GitHub repository.</p>
+    <ul>
+      <li><strong>Build Command:</strong> <code>npm run build</code></li>
+      <li><strong>Publish Directory:</strong> <code>dist</code></li>
+    </ul>
+    <p>Any push to the `main` branch will trigger a new deployment on Netlify.</p>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- ========================== BACKEND SECTION =========================== -->
+  <!-- ====================================================================== -->
+  <div id="backend" class="section">
+    <h2>Backend Documentation</h2>
+    <p>This is the backend server for the Acutrack Template Generator. It's a Node.js/Express application that handles the creation of PDF, PSD, IDML, and DOCX files.</p>
+    <p>
+        <strong>GitHub Repository:</strong> <a href="https://github.com/Mr-b-coder/my-app-backend" target="_blank">Mr-b-coder/my-app-backend</a><br>
+        <strong>Live URL:</strong> <a href="https://my-template-server.onrender.com" target="_blank">https://my-template-server.onrender.com</a><br>
+        <strong>Hosted On:</strong> Render
+    </p>
+
+    <h3 id="be-setup">How to Run Locally</h3>
+    <ol>
+      <li>Navigate into the backend folder: <pre><code>cd my-app-backend</code></pre></li>
+      <li>Install all required packages: <pre><code>npm install</code></pre></li>
+      <li>Start the development server: <pre><code>npm run dev</code></pre></li>
+    </ol>
+    <p>The server will be running at <code>http://localhost:3001</code>.</p>
+    
+    <h3 id="be-customize">Detailed Customization Guide</h3>
+    <h4>📁 1. How to Add or Change Assets (Fonts, Logos, etc.)</h4>
+    <p>The backend uses several static files to generate the templates.</p>
+    <ol>
+        <li><strong>Find the assets folder:</strong> All assets are located in <code>my-app-backend/Assets/</code>.</li>
+        <li><strong>To change the logo or font:</strong> Simply replace the existing file (e.g., `logo.png`, `Poppins-Regular.ttf`) with your new one. Keep the filename the same to avoid breaking the code.</li>
+        <li>
+            <strong>To add a NEW asset file:</strong> Place the new file in the `Assets/` folder. Then, you **must** update the build command to ensure it gets copied for deployment.
+            <ul>
+                <li><strong>File to Edit:</strong> <code>my-app-backend/package.json</code></li>
+                <li><strong>Script to Update:</strong> Find the `"build"` script and add a command to copy your new file.
+                <pre><code>// Example: if you add "new-font.ttf"
+"build": "tsc && cp -R Assets dist/ && cp template.idml dist/ && cp new-font.ttf dist/"</code></pre>
+                </li>
+            </ul>
+        </li>
+    </ol>
+
+    <h4>📚 2. How to Add or Edit Binding Types</h4>
+    <p>This is the second part of the process started on the frontend.</p>
+    <ol>
+        <li><strong>Find the main server file:</strong> Open <code>my-app-backend/server.ts</code>.</li>
+        <li><strong>Update the `BindingType` Enum:</strong> At the top of the file, add your new binding type to the `BindingType` enum. This is the central list of all supported types.
+        <pre><code>// Inside server.ts
+export enum BindingType {
+  PERFECT_BIND = 'Perfect Bind / Softcover',
+  // ... other types
+  YOUR_NEW_BINDING_TYPE = 'Your New Binding Type', // <-- ADD YOUR NEW TYPE HERE
+}</code></pre>
+        </li>
+        <li><strong>Update Generator Logic:</strong> In the `app.post` route, there's a `switch` statement in the main handler that calls different generators (e.g., `generatePdf`). You must add a `case` for your new binding type to tell the server how to create its template. You will likely need to create a new drawing function inside `pdfGenerator.ts` (and other generator files) to handle the specifics.</li>
+    </ol>
+
+    <h4>🚫 3. How to Temporarily Disable a Feature</h4>
+    <p>You can easily turn off parts of the file generation process without deleting code.</p>
+    <ol>
+        <li><strong>Find the main server file:</strong> Open <code>my-app-backend/server.ts</code>.</li>
+        <li><strong>Locate the logic block:</strong> Inside the `app.post('/api/generate-template', ...)` function, find the `if` statement for the feature you want to disable (e.g., `if (packageType === 'all' || packageType === 'interior')`).</li>
+        <li><strong>Comment it out:</strong> Wrap the entire block in `/*` and `*/` to make the server ignore it.
+        <pre><code>/*
+if (packageType === 'all' || packageType === 'interior') {
+  // ... interior generation logic ...
+}
+*/</code></pre>
+        </li>
+    </ol>
+
+    <h3 id="be-deploy">Deployment</h3>
+    <p>This backend is continuously deployed to <strong>Render</strong> from the `main` branch of its GitHub repository.</p>
+    <ul>
+        <li><strong>Build Command:</strong> <code>npm install && npm run build</code></li>
+        <li><strong>Start Command:</strong> <code>npm start</code></li>
+    </ul>
+    <div class="note">
+        <strong>⚠️ Important:</strong> The <code>build</code> script in `package.json` is critical. It compiles the code and copies all assets to the `dist` folder. If this script is incorrect, the deployment will fail.
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const switcher = document.getElementById('section-switcher');
+      const sections = document.querySelectorAll('.section');
+      const links = switcher.querySelectorAll('a');
+
+      function showSection(sectionId) {
+        sections.forEach(section => {
+          if (section.id === sectionId) {
+            section.classList.add('active');
+          } else {
+            section.classList.remove('active');
+          }
+        });
+
+        links.forEach(link => {
+          if (link.dataset.section === sectionId) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+
+        if (history.pushState) {
+            history.pushState(null, null, '#' + sectionId);
+        } else {
+            location.hash = '#' + sectionId;
+        }
+      }
+
+      switcher.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetLink = e.target.closest('a');
+        if (targetLink && targetLink.dataset.section) {
+          showSection(targetLink.dataset.section);
+        }
+      });
+      
+      const currentHash = window.location.hash.substring(1);
+      if (currentHash === 'backend' || currentHash === 'frontend') {
+          showSection(currentHash);
+      } else {
+          showSection('frontend');
+      }
+    });
+  </script>
+
+</body>
+</html>
