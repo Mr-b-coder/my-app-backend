@@ -110,8 +110,10 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
 });
 
 
-const PORT = process.env.PORT || 3001;
+Const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
+  // This log message is crucial for debugging.
+  // It will now print the port Render gave us (e.g., 10000).
   console.log(`✅ Server is running on port: ${PORT}`);
 });
