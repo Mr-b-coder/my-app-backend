@@ -110,7 +110,7 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
 });
 
 
-Const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   // This log message is crucial for debugging.
