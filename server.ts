@@ -12,9 +12,6 @@ import { generateSummary } from './summaryGenerator.js';
 
 const app = express();
 
-// --- CHANGE 1: REMOVE the hardcoded port from here ---
-// const port = 3001; 
-
 // This interface defines the data structure we expect from the frontend
 export interface TemplatePayload {
   packageType: 'all' | 'cover' | 'interior';
@@ -42,7 +39,16 @@ export interface TemplatePayload {
   isHardcoverCoilWire?: boolean;
 }
 
-app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
+// ✅✅✅ --- THE FINAL FIX IS HERE --- ✅✅✅
+// We are adding the 'origin' property to your cors configuration.
+// This tells the browser that requests from your Netlify site are allowed.
+const corsOptions = {
+  origin: 'https://acutemplate.netlify.app',
+  exposedHeaders: ['Content-Disposition'], // Keep this so the filename can be read
+};
+app.use(cors(corsOptions));
+
+
 app.use(express.json({ limit: '10mb' }));
 
 app.post('/api/generate-template', async (req: Request, res: Response) => {
@@ -100,11 +106,9 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
   }
 });
 
-// --- CHANGE 2: Define PORT dynamically here ---
-// This will use Render's port when deployed, OR port 3001 on your computer.
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  // --- CHANGE 3: Update the log message slightly ---
   console.log(`✅ Server is running on port: ${PORT}`);
 });
