@@ -29,8 +29,10 @@ export function generateSummary(payload: TemplatePayload): string {
     ``,
     `--- Cover Dimensions ---`,
     `Trim Size (Single Page): ${trimWidth.toFixed(3)}" x ${trimHeight.toFixed(3)}"`,
-    `Spine Width: ${spineWidth.toFixed(3)}"`,
-    `Bleed: ${bleed.toFixed(3)}"`,
+    // ✅ FIX: Provide a default value of 0 if spineWidth is undefined
+    `Spine Width: ${(spineWidth ?? 0).toFixed(3)}"`,
+    // ✅ FIX: Provide a default value of 0 if bleed is undefined
+    `Bleed: ${(bleed ?? 0).toFixed(3)}"`,
     `Total Cover Size (with bleed): ${totalWidth.toFixed(3)}" x ${totalHeight.toFixed(3)}"`,
     ``,
     `--- Interior Dimensions ---`,
