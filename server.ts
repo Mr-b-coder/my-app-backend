@@ -1,7 +1,7 @@
 // server/server.ts
 
 import express, { Request, Response } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors'; // <-- Import CorsOptions type
 import JSZip from 'jszip';
 import { generatePdf } from './pdfGenerator.js';
 import { buildPsd } from './psdBuilder.js';
@@ -15,7 +15,7 @@ const app = express();
 // ✅ This is now the single source of truth for BindingType
 export enum BindingType {
   PERFECT_BIND = "Perfect Bind / Softcover",
-  CASE_BIND = "Case Bind / Hardcover", 
+  CASE_BIND = "Case Bind / Hardcover",
   SADDLE_STITCH = "Saddle Stitch",
   COIL_WIRE_O_SOFTCOVER = "Coil / Wire-O - Softcover",
   COIL_WIRE_O_HARDCOVER = "Coil / Wire-O - Hardcover",
@@ -24,7 +24,7 @@ export enum BindingType {
 // This interface defines the data structure we expect from the frontend
 export interface TemplatePayload {
   packageType: 'all' | 'cover' | 'interior';
-  bindingName: string; 
+  bindingName: string;
   bindingType: string;
   bookTitle?: string;
   pageCount: number;
@@ -48,11 +48,31 @@ export interface TemplatePayload {
   isHardcoverCoilWire?: boolean;
 }
 
-const corsOptions = {
-  origin: 'https://acutemplate.netlify.app',
-  exposedHeaders: ['Content-Disposition'],
+// --- START OF CHANGES ---
+
+// 1. Define a list of origins that are allowed to make requests
+const allowedOrigins = [
+  'https://acutemplate.netlify.app', // Your production frontend
+  'http://localhost:5173'             // Your local development frontend
+];
+
+// 2. Create dynamic CORS options
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like Postman or server-to-server) or from allowed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  exposedHeaders: ['Content-Disposition'], // This is important for your file download!
 };
+
+// 3. Use the new dynamic options
 app.use(cors(corsOptions));
+
+// --- END OF CHANGES ---
 
 
 app.use(express.json({ limit: '10mb' }));
