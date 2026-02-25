@@ -179,6 +179,79 @@ async function drawCaseBind(pdfDoc: PDFDocument, p: TemplatePayload, assets: any
     drawRightInfoLine(currentY, COLORS.indicator.spine, `${(spineWidth ?? 0).toFixed(3)}`, spineDescription, infoDescSize - 1);
 }
 
+const DUST_JACKET_BLEED_INCHES = 0.125;
+
+async function drawDustJacket(pdfDoc: PDFDocument, p: TemplatePayload, assets: any) {
+    const { dustJacketTotalWidth, dustJacketTotalHeight, trimWidth, spineWidth, safetyMargin } = p;
+    const flapWidth = (p.dustJacketFlapWidthInches ?? 3);
+    const foldInches = (p.dustJacketFoldInches ?? DUST_JACKET_BLEED_INCHES);
+    const flapWithFold = flapWidth + foldInches;
+    const panelW = trimWidth ?? 0; // front/back panel = trim size (per user formula)
+    const spinePt = (spineWidth ?? 0) * DPI;
+    const bleedPt = DUST_JACKET_BLEED_INCHES * DPI;
+    const safetyPt = (safetyMargin ?? 0.5) * DPI;
+    const totalW = (dustJacketTotalWidth ?? 0) * DPI;
+    const totalH = (dustJacketTotalHeight ?? 0) * DPI;
+    const innerW = totalW - 2 * bleedPt;
+    const innerH = totalH - 2 * bleedPt;
+
+    const page = pdfDoc.addPage([totalW, totalH]);
+    const { poppinsRegular, poppinsBold, logoImage } = assets;
+
+    page.drawRectangle({ x: 0, y: 0, width: totalW, height: totalH, color: COLORS.bleedArea });
+    page.drawRectangle({ x: bleedPt, y: bleedPt, width: innerW, height: innerH, color: COLORS.background });
+
+    const flapPt = flapWithFold * DPI;
+    const panelWPt = panelW * DPI;
+    let x = bleedPt;
+    page.drawRectangle({ x, y: bleedPt, width: flapPt, height: innerH, color: COLORS.spine });
+    page.drawRectangle({ x: x + safetyPt, y: bleedPt + safetyPt, width: flapPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
+    page.drawText('LEFT FLAP', { x: x + flapPt / 2 - 35, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
+    x += flapPt;
+    page.drawRectangle({ x, y: bleedPt, width: panelWPt, height: innerH, color: COLORS.page });
+    page.drawText('FRONT', { x: x + panelWPt / 2 - 22, y: bleedPt + innerH / 2 - 8, font: poppinsBold, size: 14, color: COLORS.textPrimary });
+    x += panelWPt;
+    page.drawRectangle({ x, y: bleedPt, width: spinePt, height: innerH, color: COLORS.spine });
+    page.drawText('SPINE', { x: x + spinePt / 2 - 18, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 12, color: COLORS.textPrimary });
+    x += spinePt;
+    page.drawRectangle({ x, y: bleedPt, width: panelWPt, height: innerH, color: COLORS.page });
+    const logoDims = logoImage.scale(0.25);
+    page.drawImage(logoImage, { x: x + panelWPt / 2 - logoDims.width / 2, y: bleedPt + innerH - safetyPt - logoDims.height - 16, width: logoDims.width, height: logoDims.height });
+    page.drawText('BACK', { x: x + panelWPt / 2 - 16, y: bleedPt + innerH / 2 - 8, font: poppinsBold, size: 14, color: COLORS.textPrimary });
+    x += panelWPt;
+    page.drawRectangle({ x, y: bleedPt, width: flapPt, height: innerH, color: COLORS.spine });
+    page.drawRectangle({ x: x + safetyPt, y: bleedPt + safetyPt, width: flapPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
+    page.drawText('RIGHT FLAP', { x: x + flapPt / 2 - 38, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
+
+    const lineHeight = 44;
+    let currentY = totalH / 2 + 60;
+    const leftColumnX = bleedPt + safetyPt + 12;
+    const drawInfoLine = (y: number, color: any, val: string, desc: string) => {
+        page.drawRectangle({ x: leftColumnX, y, width: 4, height: 20, color });
+        page.drawText(val, { x: leftColumnX + 10, y: y + 8, font: poppinsBold, size: 11, color: COLORS.textPrimary });
+        page.drawText(desc, { x: leftColumnX + 10, y: y - 2, font: poppinsRegular, size: 9, color: COLORS.textSecondary });
+    };
+    drawInfoLine(currentY, COLORS.indicator.bleed, `${DUST_JACKET_BLEED_INCHES} in`, 'Bleed'); currentY -= lineHeight;
+    drawInfoLine(currentY, COLORS.indicator.safety, `${(safetyMargin ?? 0).toFixed(3)} in`, 'Safety margin'); currentY -= lineHeight;
+    drawInfoLine(currentY, COLORS.indicator.docSize, `${(dustJacketTotalWidth ?? 0).toFixed(3)} x ${(dustJacketTotalHeight ?? 0).toFixed(3)} in`, 'Total size'); currentY -= lineHeight;
+    drawInfoLine(currentY, COLORS.indicator.spine, `${flapWidth}" + ${foldInches}" fold`, 'Flap width + fold');
+}
+
+export async function generateDustJacketPdf(payload: TemplatePayload): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit as any);
+    const fontBytes = await fs.readFile(FONT_REGULAR_PATH);
+    const boldFontBytes = await fs.readFile(FONT_BOLD_PATH);
+    const logoBytes = await fs.readFile(LOGO_PATH);
+    const poppinsRegular = await pdfDoc.embedFont(fontBytes);
+    const poppinsBold = await pdfDoc.embedFont(boldFontBytes);
+    const logoImage = await pdfDoc.embedPng(logoBytes);
+    const assets = { poppinsRegular, poppinsBold, logoImage };
+    await drawDustJacket(pdfDoc, payload, assets);
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+}
+
 async function drawCoilWire(pdfDoc: PDFDocument, p: TemplatePayload, assets: any, isHardcover: boolean) {
   const frontPage = pdfDoc.addPage([p.totalWidth * DPI, p.totalHeight * DPI]);
   await drawCoilPage(frontPage, p, assets, true, isHardcover);

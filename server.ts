@@ -30,7 +30,7 @@ function getBookCreationGuidePaths(): string[] {
   }
   return paths;
 }
-import { generatePdf } from './pdfGenerator.js';
+import { generatePdf, generateDustJacketPdf } from './pdfGenerator.js';
 import { buildPsd } from './psdBuilder.js';
 import { buildIdml } from './idmlBuilder.js';
 import { generateSummary } from './summaryGenerator.js';
@@ -73,6 +73,11 @@ export interface TemplatePayload {
   safetyMarginBindingEdge?: number;
   safetyMarginOutsideEdge?: number;
   isHardcoverCoilWire?: boolean;
+  includeDustJacket?: boolean;
+  dustJacketFlapWidthInches?: number;
+  dustJacketFoldInches?: number;
+  dustJacketTotalWidth?: number;
+  dustJacketTotalHeight?: number;
 }
 
 // --- START OF CHANGES ---
@@ -260,6 +265,9 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
       filesToGenerate.push({ name: 'Cover/cover.pdf', generator: generatePdf(payload) });
       filesToGenerate.push({ name: 'Cover/cover.psd', generator: buildPsd(payload) });
       filesToGenerate.push({ name: 'Cover/cover.idml', generator: buildIdml(payload) });
+      if (payload.includeDustJacket && payload.bindingName === BindingType.CASE_BIND) {
+        filesToGenerate.push({ name: 'Cover/dust-jacket.pdf', generator: generateDustJacketPdf(payload) });
+      }
     }
     
     if (packageType === 'all' || packageType === 'interior') {
