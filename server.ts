@@ -316,7 +316,7 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
   }
 });
 
-// Temporary: direct dust jacket PDF download for checking the template
+// Dust jacket PDF only (also included in full template ZIP when dust jacket is enabled)
 app.post('/api/generate-dust-jacket', async (req: Request, res: Response) => {
   try {
     const payload = req.body as TemplatePayload;
