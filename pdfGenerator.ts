@@ -33,8 +33,10 @@ const COLORS = {
       docSize: rgb(0.004, 0.525, 0.522),
       trim: rgb(0.125, 0.294, 0.498),
       spine: rgb(0.925, 0.455, 0.424),
+      fold: rgb(0.75, 0.65, 0.55),
       punchHole: rgb(0.6, 0.6, 0.6),
-  }
+  },
+  fold: rgb(0.75, 0.65, 0.55), // 0.125" folding area on both sides of flaps
 };
 const DPI = 72;
 
@@ -182,11 +184,12 @@ async function drawCaseBind(pdfDoc: PDFDocument, p: TemplatePayload, assets: any
 const DUST_JACKET_BLEED_INCHES = 0.125;
 
 async function drawDustJacket(pdfDoc: PDFDocument, p: TemplatePayload, assets: any) {
-    const { dustJacketTotalWidth, dustJacketTotalHeight, trimWidth, spineWidth, safetyMargin } = p;
+    const { dustJacketTotalWidth, dustJacketTotalHeight, trimWidth, trimHeight, spineWidth, safetyMargin, pageCount, paperStock } = p;
     const flapWidth = (p.dustJacketFlapWidthInches ?? 3);
     const foldInches = (p.dustJacketFoldInches ?? DUST_JACKET_BLEED_INCHES);
     const flapWithFold = flapWidth + foldInches;
-    const panelW = trimWidth ?? 0; // front/back panel = trim size (per user formula)
+    const BOARD_SIZE_INCHES = 0.098;
+    const panelW = (trimWidth ?? 0) + BOARD_SIZE_INCHES + 0.125;
     const spinePt = (spineWidth ?? 0) * DPI;
     const bleedPt = DUST_JACKET_BLEED_INCHES * DPI;
     const safetyPt = (safetyMargin ?? 0.5) * DPI;
@@ -194,47 +197,118 @@ async function drawDustJacket(pdfDoc: PDFDocument, p: TemplatePayload, assets: a
     const totalH = (dustJacketTotalHeight ?? 0) * DPI;
     const innerW = totalW - 2 * bleedPt;
     const innerH = totalH - 2 * bleedPt;
+    const flapPt = flapWithFold * DPI;
+    const foldPt = foldInches * DPI;
+    const flapWidthPt = (flapWidth ?? 3) * DPI; // main flap width (user selection: 3 or 4 in)
+    const panelWPt = panelW * DPI;
+    // Flap white (safety) rect width: 2.87" for 3" flap, 3.87" for 4" flap (1" difference), centered in main flap only (excluding fold)
+    const flapWhiteRectWidthInches = flapWidth === 4 ? 3.87 : 2.87;
+    const flapWhiteRectPt = flapWhiteRectWidthInches * DPI;
+    const flapWhiteRectCenterInMainFlap = (flapWidthPt - flapWhiteRectPt) / 2; // center white in main flap (not fold)
+    // White (safety) area height: from trim height so it scales with user trim size (e.g. 6x9 → 9", 5x8 → 8"); clamp to inner height
+    const innerHInches = innerH / DPI;
+    const whiteAreaHeightInches = Math.min(trimHeight ?? 9, Math.max(1, innerHInches - 0.02));
+    const whiteAreaHeightPt = whiteAreaHeightInches * DPI;
+    const whiteAreaYOffset = (innerH - whiteAreaHeightPt) / 2;
+    const whiteAreaY = bleedPt + whiteAreaYOffset;
+    // Flap white area inset: reduce by 0.125" on all sides; x positions center white in main flap only
+    const flapInsetInches = 0.125;
+    const flapInsetPt = flapInsetInches * DPI;
+    const backFlapWhiteRectInsetX = flapWhiteRectCenterInMainFlap + flapInsetPt;
+    const frontFlapWhiteRectInsetX = foldPt + flapWhiteRectCenterInMainFlap + flapInsetPt;
+    const flapWhiteRectInsetW = flapWhiteRectPt - 2 * flapInsetPt;
+    const flapWhiteRectInsetY = whiteAreaY + flapInsetPt;
+    const flapWhiteRectInsetH = whiteAreaHeightPt - 2 * flapInsetPt;
+
+    // Panel positions left to right: Back flap | Back Cover | Spine | Front Cover | Front Flap
+    const backFlapX = bleedPt;
+    const backPanelX = backFlapX + flapPt;
+    const spineX = backPanelX + panelWPt;
+    const frontPanelX = spineX + spinePt;
+    const frontFlapX = frontPanelX + panelWPt;
 
     const page = pdfDoc.addPage([totalW, totalH]);
     const { poppinsRegular, poppinsBold, logoImage } = assets;
 
+    // 1. Base layer: full rectangle teal (bleed area – calculated size)
     page.drawRectangle({ x: 0, y: 0, width: totalW, height: totalH, color: COLORS.bleedArea });
+
+    // 2. Blue background: 0.125" (bleed) inset on all sides (same as perfect bind)
     page.drawRectangle({ x: bleedPt, y: bleedPt, width: innerW, height: innerH, color: COLORS.background });
 
-    const flapPt = flapWithFold * DPI;
-    const panelWPt = panelW * DPI;
-    let x = bleedPt;
-    page.drawRectangle({ x, y: bleedPt, width: flapPt, height: innerH, color: COLORS.spine });
-    page.drawRectangle({ x: x + safetyPt, y: bleedPt + safetyPt, width: flapPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
-    page.drawText('LEFT FLAP', { x: x + flapPt / 2 - 35, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
-    x += flapPt;
-    page.drawRectangle({ x, y: bleedPt, width: panelWPt, height: innerH, color: COLORS.page });
-    page.drawText('FRONT', { x: x + panelWPt / 2 - 22, y: bleedPt + innerH / 2 - 8, font: poppinsBold, size: 14, color: COLORS.textPrimary });
-    x += panelWPt;
-    page.drawRectangle({ x, y: bleedPt, width: spinePt, height: innerH, color: COLORS.spine });
-    page.drawText('SPINE', { x: x + spinePt / 2 - 18, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 12, color: COLORS.textPrimary });
-    x += spinePt;
-    page.drawRectangle({ x, y: bleedPt, width: panelWPt, height: innerH, color: COLORS.page });
-    const logoDims = logoImage.scale(0.25);
-    page.drawImage(logoImage, { x: x + panelWPt / 2 - logoDims.width / 2, y: bleedPt + innerH - safetyPt - logoDims.height - 16, width: logoDims.width, height: logoDims.height });
-    page.drawText('BACK', { x: x + panelWPt / 2 - 16, y: bleedPt + innerH / 2 - 8, font: poppinsBold, size: 14, color: COLORS.textPrimary });
-    x += panelWPt;
-    page.drawRectangle({ x, y: bleedPt, width: flapPt, height: innerH, color: COLORS.spine });
-    page.drawRectangle({ x: x + safetyPt, y: bleedPt + safetyPt, width: flapPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
-    page.drawText('RIGHT FLAP', { x: x + flapPt / 2 - 38, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
+    // 3. Spine strip (full height of inner area)
+    page.drawRectangle({ x: spineX, y: bleedPt, width: spinePt, height: innerH, color: COLORS.spine });
 
+    // 4. Back cover white rect (safety area) – full height
+    page.drawRectangle({ x: backPanelX + safetyPt, y: bleedPt + safetyPt, width: panelWPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
+
+    // 5. Front cover white rect (safety area) – full height
+    page.drawRectangle({ x: frontPanelX + safetyPt, y: bleedPt + safetyPt, width: panelWPt - 2 * safetyPt, height: innerH - 2 * safetyPt, color: COLORS.page });
+
+    // 6. Logos and panel labels (logo top-centered; label below logo on back and front cover)
+    const logoDims = logoImage.scale(0.25);
+    const backCenterX = backPanelX + panelWPt / 2;
+    const frontCenterX = frontPanelX + panelWPt / 2;
+    const logoY = bleedPt + innerH - safetyPt - logoDims.height - 16;
+    const labelGap = 12;
+    const labelSize = 14;
+    const labelY = logoY - labelGap - labelSize; // baseline for text below logo
+    page.drawImage(logoImage, { x: backCenterX - logoDims.width / 2, y: logoY, width: logoDims.width, height: logoDims.height });
+    page.drawImage(logoImage, { x: frontCenterX - logoDims.width / 2, y: logoY, width: logoDims.width, height: logoDims.height });
+    page.drawText('BACK COVER', { x: backCenterX - 42, y: labelY, font: poppinsBold, size: labelSize, color: COLORS.textPrimary });
+    page.drawText('FRONT COVER', { x: frontCenterX - 48, y: labelY, font: poppinsBold, size: labelSize, color: COLORS.textPrimary });
+    page.drawText('SPINE', { x: spineX + spinePt / 2 - 18, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 12, color: COLORS.textPrimary });
+
+    // 7. Back flap – main flap (flap width) + fold (0.125") with separate colors, then white safety rect + label
+    page.drawRectangle({ x: backFlapX, y: bleedPt, width: flapWidthPt, height: innerH, color: COLORS.spine });
+    page.drawRectangle({ x: backFlapX + flapWidthPt, y: bleedPt, width: foldPt, height: innerH, color: COLORS.fold });
+    page.drawRectangle({ x: backFlapX + backFlapWhiteRectInsetX, y: flapWhiteRectInsetY, width: flapWhiteRectInsetW, height: flapWhiteRectInsetH, color: COLORS.page });
+    page.drawText('BACK FLAP', { x: backFlapX + flapPt / 2 - 38, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
+
+    // 8. Front flap – fold (0.125") + main flap (flap width) with separate colors, then white safety rect + label
+    page.drawRectangle({ x: frontFlapX, y: bleedPt, width: foldPt, height: innerH, color: COLORS.fold });
+    page.drawRectangle({ x: frontFlapX + foldPt, y: bleedPt, width: flapWidthPt, height: innerH, color: COLORS.spine });
+    page.drawRectangle({ x: frontFlapX + frontFlapWhiteRectInsetX, y: flapWhiteRectInsetY, width: flapWhiteRectInsetW, height: flapWhiteRectInsetH, color: COLORS.page });
+    page.drawText('FRONT FLAP', { x: frontFlapX + flapPt / 2 - 40, y: bleedPt + innerH / 2 - 8, font: poppinsRegular, size: 14, color: COLORS.textPrimary });
+
+    // Info on BACK COVER (left column): bleed, safety, barcode placeholder
     const lineHeight = 44;
-    let currentY = totalH / 2 + 60;
-    const leftColumnX = bleedPt + safetyPt + 12;
-    const drawInfoLine = (y: number, color: any, val: string, desc: string) => {
-        page.drawRectangle({ x: leftColumnX, y, width: 4, height: 20, color });
-        page.drawText(val, { x: leftColumnX + 10, y: y + 8, font: poppinsBold, size: 11, color: COLORS.textPrimary });
-        page.drawText(desc, { x: leftColumnX + 10, y: y - 2, font: poppinsRegular, size: 9, color: COLORS.textSecondary });
+    const infoHeaderSize = 13;
+    const infoDescSize = 10;
+    const headerToDescSpacing = 3;
+    const backColumnX = backPanelX + safetyPt + 20;
+    let currentY = totalH / 2 + 80;
+    const drawInfoLine = (x: number, y: number, color: any, val: string, desc: string) => {
+        page.drawRectangle({ x, y, width: 4, height: 25, color });
+        page.drawText(val, { x: x + 12, y: y + 10 + headerToDescSpacing, font: poppinsBold, size: infoHeaderSize, color: COLORS.textPrimary });
+        page.drawText(desc, { x: x + 12, y, font: poppinsRegular, size: infoDescSize, color: COLORS.textSecondary });
     };
-    drawInfoLine(currentY, COLORS.indicator.bleed, `${DUST_JACKET_BLEED_INCHES} in`, 'Bleed'); currentY -= lineHeight;
-    drawInfoLine(currentY, COLORS.indicator.safety, `${(safetyMargin ?? 0).toFixed(3)} in`, 'Safety margin'); currentY -= lineHeight;
-    drawInfoLine(currentY, COLORS.indicator.docSize, `${(dustJacketTotalWidth ?? 0).toFixed(3)} x ${(dustJacketTotalHeight ?? 0).toFixed(3)} in`, 'Total size'); currentY -= lineHeight;
-    drawInfoLine(currentY, COLORS.indicator.spine, `${flapWidth}" + ${foldInches}" fold`, 'Flap width + fold');
+    drawInfoLine(backColumnX, currentY, COLORS.indicator.bleed, `${DUST_JACKET_BLEED_INCHES} in`, 'Bleed - Extend your color or BG till here'); currentY -= lineHeight;
+    drawInfoLine(backColumnX, currentY, COLORS.indicator.safety, `${(safetyMargin ?? 0).toFixed(3)} in`, 'Safety Margin - Keep important text inside'); currentY -= lineHeight;
+    drawInfoLine(backColumnX, currentY, COLORS.indicator.barcode, '1.75 x 1 in', 'Barcode optional');
+    const barcodeW = 1.75 * DPI;
+    const barcodeH = 1 * DPI;
+    // Barcode in bottom-right of back cover white (safety) area (PDF y=0 at bottom, so bottom edge of white is bleedPt + safetyPt)
+    const backWhiteRight = backPanelX + panelWPt - safetyPt;
+    const barcodeX = backWhiteRight - barcodeW;
+    const barcodeY = bleedPt + safetyPt; // white area bottom edge = visual bottom-right
+    page.drawRectangle({ x: barcodeX, y: barcodeY, width: barcodeW, height: barcodeH, color: rgb(0.98, 0.83, 0.45), opacity: 0.8 });
+
+    // Info on FRONT COVER (right column): total size, trim size, spine, flap + fold
+    const frontColumnX = frontPanelX + safetyPt + 20;
+    currentY = totalH / 2 + 80;
+    const drawRightInfoLine = (y: number, color: any, val: string, desc: string, descSize: number = infoDescSize) => {
+        page.drawRectangle({ x: frontColumnX, y, width: 4, height: 25, color });
+        page.drawText(val, { x: frontColumnX + 12, y: y + 10 + headerToDescSpacing, font: poppinsBold, size: infoHeaderSize, color: COLORS.textPrimary });
+        page.drawText(desc, { x: frontColumnX + 12, y, font: poppinsRegular, size: descSize, color: COLORS.textSecondary });
+    };
+    drawRightInfoLine(currentY, COLORS.indicator.docSize, `${(dustJacketTotalWidth ?? 0).toFixed(3)} x ${(dustJacketTotalHeight ?? 0).toFixed(3)} in`, 'Total Document Size'); currentY -= lineHeight;
+    drawRightInfoLine(currentY, COLORS.indicator.trim, `${trimWidth ?? 0} x ${trimHeight ?? 0} in`, 'Trim Size'); currentY -= lineHeight;
+    let spineDesc = `Spine for ${pageCount ?? 0} pages using ${paperStock ?? 'N/A'}`;
+    if ((spineWidth ?? 0) < 0.25) { spineDesc = '(Spine text not recommended if below 0.25")'; }
+    drawRightInfoLine(currentY, COLORS.indicator.spine, `${(spineWidth ?? 0).toFixed(3)} in`, spineDesc, infoDescSize - 1); currentY -= lineHeight;
+    drawRightInfoLine(currentY, COLORS.indicator.spine, `${flapWidth} in`, 'Flap – Front and back flaps width', infoDescSize - 1); currentY -= lineHeight;
+    drawRightInfoLine(currentY, COLORS.indicator.fold, `${foldInches} in`, 'Fold – Folding area on both sides of flaps', infoDescSize - 1);
 }
 
 export async function generateDustJacketPdf(payload: TemplatePayload): Promise<Buffer> {

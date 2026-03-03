@@ -316,6 +316,26 @@ app.post('/api/generate-template', async (req: Request, res: Response) => {
   }
 });
 
+// Temporary: direct dust jacket PDF download for checking the template
+app.post('/api/generate-dust-jacket', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body as TemplatePayload;
+    if (!payload || payload.bindingName !== BindingType.CASE_BIND || !payload.includeDustJacket || payload.dustJacketTotalWidth == null || payload.dustJacketTotalHeight == null) {
+      return res.status(400).json({ error: 'Invalid request. Use Case Bind with Include dust jacket and run "Get your files" first.' });
+    }
+    const pdfBuffer = await generateDustJacketPdf(payload);
+    const fileName = 'dust-jacket-check.pdf';
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(pdfBuffer);
+    console.log('Sent dust jacket PDF for check.');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Dust jacket generation error:', error);
+    res.status(500).json({ error: `Failed to generate dust jacket PDF: ${errorMessage}` });
+  }
+});
+
 
 const PORT = process.env.PORT || 3001;
 
